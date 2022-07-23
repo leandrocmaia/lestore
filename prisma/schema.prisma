@@ -13,47 +13,47 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
+  id        String       @id @default(cuid())
   email     String    @unique
   name      String?
   products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
 }
 
 model Product {
-  id            Int            @id @default(autoincrement())
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @default(now()) @updatedAt
+  id            String            @id @default(cuid())
   name          String
   price         Float
   user          User           @relation(fields: [userId], references: [id])
-  userId        Int
+  userId        String
   photos        ProductPhoto[]
   orderProducts OrderProduct[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
 }
 
 model ProductPhoto {
-  id        Int     @id @default(autoincrement())
+  id        String     @id @default(cuid())
   url       String
   product   Product @relation(fields: [productId], references: [id])
-  productId Int
+  productId String
 }
 
 model Order {
-  id             Int            @id @default(autoincrement())
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @default(now()) @updatedAt
+  id             String         @id @default(cuid())
   amountCurrency String
   amountTotal    Float
   status         String
   orderProducts  OrderProduct[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now()) @updatedAt
 }
 
 model OrderProduct {
-  id        Int     @id @default(autoincrement())
+  id        String     @id @default(cuid())
   order     Order   @relation(fields: [orderId], references: [id])
-  orderId   Int
+  orderId   String
   product   Product @relation(fields: [productId], references: [id])
-  productId Int
+  productId String
 }
