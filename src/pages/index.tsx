@@ -5,9 +5,19 @@ import { prisma } from "../db/client";
 import superjson from "superjson";
 import ProductGrid from "../components/product/ProductGrid";
 import { Prisma, Product, ProductPhoto } from "@prisma/client";
+import { trpc } from "../utils/trcp";
 
-const Home: NextPage<{ products: any }> = ({ products }) => {
-  console.log("Props", products);
+const Home: NextPage = () => {
+  const { data, isLoading } = trpc.useQuery(["products.findAll"]);
+
+  if (isLoading)
+    return (
+      <div className="antialiased min-h-screen flex items-center justify-center">
+        <p className="text-white/40">Loading...</p>
+      </div>
+    );
+
+  console.log("Products", data);
   return (
     <div className={styles.container}>
       <Head>
@@ -21,25 +31,12 @@ const Home: NextPage<{ products: any }> = ({ products }) => {
 
       <main className={styles.main}>
         <h1 className="text-3xl font-bold underline">Product list</h1>
-        <ProductGrid products={products} />
+        <ProductGrid products={data} />
       </main>
 
       <footer className={styles.footer}>Powered by me.</footer>
     </div>
   );
-};
-
-export const getServerSideProps = async () => {
-  const products = await prisma?.product.findMany({
-    include: { photos: true },
-  });
-
-  console.log(superjson.serialize(products).json);
-  return {
-    props: {
-      products: superjson.serialize(products).json,
-    },
-  };
 };
 
 export default Home;
