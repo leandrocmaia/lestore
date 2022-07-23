@@ -1,17 +1,26 @@
 import { Product, ProductPhoto } from "@prisma/client";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
 
 const ProductGrid: React.FC<{
   products: any;
 }> = ({ products }) => {
-  console.log(products);
+  const router = useRouter();
+
+  const handleOnClick = (productId: string) => {
+    router.push(`/product/${productId}`);
+  };
+
   return (
     <div className="bg-white">
       <div className="max-w-2xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:max-w-7xl lg:px-8">
         <h2 className="text-2xl font-extrabold tracking-tight text-gray-900">
           My Products
         </h2>
-        <button className="btn btn-blue float-right">Add Product</button>
+        <Link href="/product/add">
+          <button className="btn btn-blue float-right">Add Product</button>
+        </Link>
         <div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
           {products?.map((product: Product & { photos: ProductPhoto[] }) => (
             <div key={product.id} className="group relative">
@@ -27,10 +36,12 @@ const ProductGrid: React.FC<{
               <div className="mt-4 flex justify-between">
                 <div>
                   <h3 className="text-sm text-gray-700">
-                    <a href={product.id}>
-                      <span aria-hidden="true" className="absolute inset-0" />
-                      {product.name}
-                    </a>
+                    <Link href={`/product/${product.id}`}>
+                      <a>
+                        <span aria-hidden="true" className="absolute inset-0" />
+                        {product.name}
+                      </a>
+                    </Link>
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">Color</p>
                 </div>
