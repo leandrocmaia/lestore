@@ -1,6 +1,5 @@
 import * as trpc from "@trpc/server";
-const appRouter = trpc.router()
-.query()
+const appRouter = trpc.router();
 
 // only export *type signature* of router!
 // to avoid accidentally importing your API
