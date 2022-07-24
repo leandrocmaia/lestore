@@ -13,7 +13,7 @@ datasource db {
 }
 
 model User {
-  id        String       @id @default(cuid())
+  id        String    @id @default(cuid())
   email     String    @unique
   name      String?
   products  Product[]
@@ -22,19 +22,22 @@ model User {
 }
 
 model Product {
-  id            String            @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String
   price         Float
+  description   String?        @db.LongText
   user          User           @relation(fields: [userId], references: [id])
   userId        String
   photos        ProductPhoto[]
   orderProducts OrderProduct[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
+  currencyId    String         
+  currency      Currency       @relation(fields: [currencyId], references: [id])
 }
 
 model ProductPhoto {
-  id        String     @id @default(cuid())
+  id        String  @id @default(cuid())
   url       String
   product   Product @relation(fields: [productId], references: [id])
   productId String
@@ -51,9 +54,18 @@ model Order {
 }
 
 model OrderProduct {
-  id        String     @id @default(cuid())
+  id        String  @id @default(cuid())
   order     Order   @relation(fields: [orderId], references: [id])
   orderId   String
   product   Product @relation(fields: [productId], references: [id])
   productId String
+}
+
+
+model Currency {
+  id String @id @default(cuid())
+  name String @unique
+  code String @unique
+  symbol String @unique
+  products Product[]
 }

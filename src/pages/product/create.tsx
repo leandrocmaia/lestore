@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { trpc } from "../../utils/trcp";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { isNumberObject } from "util/types";
+import { useEffect, useState } from "react";
 
 const MAX_FILE_SIZE = 500000;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
@@ -11,32 +11,43 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
 export const createProductValidator = z.object({
   name: z.string().min(2).max(600),
   price: z.number(),
-  // photos: z
-  //   .any()
-  //   .optional()
-  //   .refine((files) => files?.length == 1, "Image is required.")
-  //   .refine(
-  //     (files) => files?.[0]?.size <= MAX_FILE_SIZE,
-  //     `Max file size is 5MB.`
-  //   )
-  //   .refine(
-  //     (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-  //     ".jpg, .jpeg, .png and .webp files are accepted."
-  //   ),
+  description: z.string().optional(),
+  currency: z.string().optional(),
+  photos: z.array(z.string()).optional(),
 });
 
 export type CreateProductInputType = z.infer<typeof createProductValidator>;
 
-const AddProduct = () => {
+const CreateProduct = () => {
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
+    setValue,
+    getValues,
   } = useForm<CreateProductInputType>({
     resolver: zodResolver(createProductValidator),
     defaultValues: {},
   });
+  console.log(watch());
+  const handleFileUpload = async ({
+    currentTarget: input,
+  }: React.ChangeEvent<HTMLInputElement>) => {
+    if (!input.files || !input.files.length) return;
+
+    let formData = new FormData();
+    formData.append("product_photo", input.files[0] as File);
+
+    const submitFiles = await fetch(`/api/file/upload`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const json = await submitFiles.json();
+    console.log("Filename", json.url);
+    setValue("photos", [...(getValues("photos") || []), json.url]);
+  };
 
   const router = useRouter();
 
@@ -52,13 +63,9 @@ const AddProduct = () => {
     }
   );
   return (
-    <div>
-      <div>
-        <h1>Add Product</h1>
-      </div>
-
-      <>
-        <div>
+    <>
+      <div className="bg-gray-100">
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="md:grid md:grid-cols-3 md:gap-6">
             <div className="md:col-span-1">
               <div className="px-4 sm:px-0">
@@ -93,7 +100,7 @@ const AddProduct = () => {
                             type="text"
                             id="company-website"
                             className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
-                            placeholder="www.example.com"
+                            placeholder=""
                             {...register("name")}
                           />
                         </div>
@@ -108,16 +115,32 @@ const AddProduct = () => {
                         >
                           Price
                         </label>
-                        <div className="mt-1 flex rounded-md shadow-sm">
+
+                        <div className="mt-1 relative rounded-md shadow-sm">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">$</span>
+                          </div>
                           <input
                             type="text"
-                            id="company-website"
-                            className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
-                            placeholder="www.example.com"
+                            className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                            placeholder="0.00"
                             {...register("price", {
                               valueAsNumber: true,
                             })}
                           />
+                          <div className="absolute inset-y-0 right-0 flex items-center">
+                            <label htmlFor="currency" className="sr-only">
+                              Currency
+                            </label>
+                            <select
+                              className="focus:ring-indigo-500 focus:border-indigo-500 h-full py-0 pl-2 pr-7 border-transparent bg-transparent text-gray-500 sm:text-sm rounded-md"
+                              {...register("currency")}
+                            >
+                              <option>USD</option>
+                              <option>CAD</option>
+                              <option>EUR</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -131,46 +154,22 @@ const AddProduct = () => {
                       </label>
                       <div className="mt-1">
                         <textarea
-                          id="about"
-                          name="about"
                           rows={3}
                           className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                          placeholder="you@example.com"
+                          placeholder=""
                           defaultValue={""}
+                          {...register("description")}
                         />
                       </div>
                       <p className="mt-2 text-sm text-gray-500">
-                        Brief description for your profile. URLs are
+                        Brief description for your product. URLs are
                         hyperlinked.
                       </p>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Photos
-                      </label>
-                      <div className="mt-1 flex items-center">
-                        <span className="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100">
-                          <svg
-                            className="h-full w-full text-gray-300"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                          </svg>
-                        </span>
-                        <button
-                          type="button"
-                          className="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        >
-                          Change
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Cover photo
+                        Product photos
                       </label>
                       <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                         <div className="space-y-1 text-center">
@@ -199,6 +198,7 @@ const AddProduct = () => {
                                 name="file-upload"
                                 type="file"
                                 className="sr-only"
+                                onChange={(e) => handleFileUpload(e)}
                               />
                             </label>
                             <p className="pl-1">or drag and drop</p>
@@ -215,7 +215,7 @@ const AddProduct = () => {
                       type="submit"
                       className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
-                      Save
+                      Create
                     </button>
                   </div>
                 </div>
@@ -223,8 +223,8 @@ const AddProduct = () => {
             </div>
           </div>
         </div>
-      </>
-    </div>
+      </div>
+    </>
   );
 };
-export default AddProduct;
+export default CreateProduct;

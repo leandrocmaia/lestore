@@ -25,23 +25,36 @@ export const appRouter = trpc
     input: z.object({
       name: z.string(),
       price: z.number(),
-      // photos: z.array(z.object({ url: z.string() })),
+      description: z.string().optional(),
+      currency: z.string().optional(),
+      photos: z.array(z.string()).optional(),
     }),
     async resolve({ input }) {
+      const user = await prisma.user.findFirst();
+      if (!user) {
+        throw new Error("User not found");
+      }
+
       return prisma.product.create({
         data: {
           name: input.name,
           price: input.price,
-          user: {
+          description: input.description,
+          currency: {
             connect: {
-              id: "cl5xpxmtf0085zu0jb0m1twfc",
+              code: input.currency,
             },
           },
-          // photos: {
-          //   create: input.photos.map((photo) => ({
-          //     url: photo.url,
-          //   })),
-          // },
+          user: {
+            connect: {
+              id: user?.id,
+            },
+          },
+          photos: {
+            create: input.photos?.map((url) => ({
+              url,
+            })),
+          },
         },
       });
     },
